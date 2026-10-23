@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # Add parent directory to path so imports work cleanly
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -58,15 +59,37 @@ app.include_router(routes_templates.router)
 app.include_router(routes_ai.router)
 app.include_router(dynamic_mock_router.router)
 
-@app.get("/")
-def root():
-    return {
-        "platform": settings.app_name,
-        "version": settings.version,
-        "docs": "/docs",
-        "health": "/health",
-        "description": "Enterprise Synthetic Data Generator, Mock API Builder & Quality Lab"
-    }
+# Mount Frontend SPA if dist exists
+frontend_dist = BASE_DIR.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="static_assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        if (
+            full_path.startswith("api/")
+            or full_path.startswith("docs")
+            or full_path.startswith("health")
+            or full_path.startswith("redoc")
+            or full_path.startswith("openapi.json")
+        ):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Endpoint not found")
+        
+        target_file = frontend_dist / full_path
+        if full_path and target_file.is_file():
+            return FileResponse(target_file)
+        return FileResponse(frontend_dist / "index.html")
+else:
+    @app.get("/")
+    def root():
+        return {
+            "platform": settings.app_name,
+            "version": settings.version,
+            "docs": "/docs",
+            "health": "/health",
+            "description": "Enterprise Synthetic Data Generator, Mock API Builder & Quality Lab"
+        }
 
 if __name__ == "__main__":
     import uvicorn

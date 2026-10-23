@@ -47,6 +47,10 @@ data/mock_state/*.json
 Thumbs.db
 desktop.ini
 
+# Binaries & executables
+*.exe
+cloudflared.exe
+
 # IDEs
 .vscode/
 .idea/

@@ -96,7 +96,8 @@ export const ApiExplorerPage: React.FC = () => {
   };
 
   const getCurlSnippet = () => {
-    const fullUrl = `http://localhost:8000/api/mock/${selectedResource}${pathSuffix ? (pathSuffix.startsWith('/') || pathSuffix.startsWith('?') ? pathSuffix : '/' + pathSuffix) : ''}`;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000';
+    const fullUrl = `${origin}/api/mock/${selectedResource}${pathSuffix ? (pathSuffix.startsWith('/') || pathSuffix.startsWith('?') ? pathSuffix : '/' + pathSuffix) : ''}`;
     let snippet = `curl -X ${method} "${fullUrl}"`;
     if (['POST', 'PUT', 'PATCH'].includes(method)) {
       snippet += ` \\\n  -H "Content-Type: application/json" \\\n  -d '${requestBody.replace(/\n\s*/g, ' ')}'`;
